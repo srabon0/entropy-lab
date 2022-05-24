@@ -15,17 +15,15 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
-
-
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
-    return res.status(401).send({ message: 'UnAuthorized access' });
+    return res.status(401).send({ message: "UnAuthorized access" });
   }
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_ENC_KEY, function (err, decoded) {
     if (err) {
-      return res.status(403).send({ message: 'Forbidden access' })
+      return res.status(403).send({ message: "Forbidden access" });
     }
     req.decoded = decoded;
     next();
@@ -56,52 +54,55 @@ async function run() {
     });
 
     //additem
-    app.post('/additem',async(req,res)=>{
-      const item = req.body
+    app.post("/additem", async (req, res) => {
+      const item = req.body;
       const result = await itemCollection.insertOne(item);
       res.send(result);
-
     });
 
     //get a single item
 
-    app.get('/item/:id', async(req,res)=>{
-      const itemId = req.params.id
-      const query = {_id:ObjectId(itemId)}
-      const result = await itemCollection.findOne(query)
+    app.get("/item/:id", async (req, res) => {
+      const itemId = req.params.id;
+      const query = { _id: ObjectId(itemId) };
+      const result = await itemCollection.findOne(query);
       res.send(result);
-    })
+    });
 
     //delete an item
-    app.delete('/item/:id', async(req,res)=>{
-      const itemId = req.params.id
-      const query = {_id:ObjectId(itemId)}
-      const result = await orderCollection.deleteOne(query)
+    app.delete("/item/:id", async (req, res) => {
+      const itemId = req.params.id;
+      const query = { _id: ObjectId(itemId) };
+      const result = await orderCollection.deleteOne(query);
       res.send(result);
-      console.log(itemId)
-    })
-/**
- * Get orders
- * Add orders
- * order filter by email
- * 
-*/
-    app.get('/order/:email',async(req,res)=>{
-      const email = req.params.email
-      const query = {customer:email}
+      console.log(itemId);
+    });
+    /**
+     * Get orders
+     * Add orders
+     * order filter by email
+     *
+     */
+    app.get("/order/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { customer: email };
       const result = await orderCollection.find(query).toArray();
       res.send(result);
-    })
+    });
 
-    app.post('/order',async(req,res)=>{
-      const order = req.body
-      console.log(order)
+    app.post("/order", async (req, res) => {
+      const order = req.body;
+      console.log(order);
       const result = await orderCollection.insertOne(order);
       res.send(result);
-    })
+    });
 
-
-
+    //get all user
+    app.get("/users", verifyJWT, async (req, res) => {
+      const query = {};
+      const result = await userCollection.find(query).toArray();
+      res.send(result);
+    });
     //craeatea a new user
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -120,44 +121,60 @@ async function run() {
       res.send({ result, token });
     });
 
-
     ///get a user
 
-    app.get('/user/:email', async(req,res)=>{
-      const email = req.params.email
-      const query = {email:email}
-      const result = await userCollection.findOne(query)
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await userCollection.findOne(query);
       res.send(result);
-    })
+    });
 
     //update a user
-    app.put('/update/:email', verifyJWT, async(req,res)=>{
-      const email = req.params.email
+    app.put("/update/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
       const filter = { email: email };
-      const userinfo  =  req.body 
+      const userinfo = req.body;
       const options = { upsert: true };
       const updateDoc = {
         $set: {
-          name:userinfo.name,
+          name: userinfo.name,
           img: userinfo.img,
-          contact:userinfo.contact
+          contact: userinfo.contact,
         },
       };
-      
+
       const result = await userCollection.updateOne(filter, updateDoc, options);
-  
-      res.send(result);
-    })
 
-    //add a review
-    app.post('/addreview', verifyJWT, async(req,res)=>{
-      const item = req.body
-      console.log(item)
-      const result = await reviewCollection.insertOne(item);
       res.send(result);
-
     });
 
+    //delte a user
+
+    app.delete('/deluser/:id',verifyJWT, async(req,res)=>{
+      const userId = req.params.id
+      console.log(userId)
+      const query = { _id: ObjectId(userId) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result)
+    })
+
+    //all review
+
+    app.get("/reviews", async (req, res) => {
+      const query = {};
+      const cursor = reviewCollection.find(query);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
+
+    //add a review
+    app.post("/addreview", verifyJWT, async (req, res) => {
+      const item = req.body;
+      console.log(item);
+      const result = await reviewCollection.insertOne(item);
+      res.send(result);
+    });
   } finally {
     //
   }
