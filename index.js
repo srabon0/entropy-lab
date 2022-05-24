@@ -39,6 +39,7 @@ async function run() {
     const itemCollection = database.collection("labItems");
     const userCollection = database.collection("users");
     const orderCollection = database.collection("orders");
+    const reviewCollection = database.collection("review");
     console.log("EntropyLab server connected");
 
     /**
@@ -148,6 +149,14 @@ async function run() {
       res.send(result);
     })
 
+    //add a review
+    app.post('/addreview', verifyJWT, async(req,res)=>{
+      const item = req.body
+      console.log(item)
+      const result = await reviewCollection.insertOne(item);
+      res.send(result);
+
+    });
 
   } finally {
     //
