@@ -15,6 +15,23 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+
+
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: 'UnAuthorized access' });
+  }
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_ENC_KEY, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: 'Forbidden access' })
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function run() {
   try {
     await client.connect();
@@ -52,6 +69,15 @@ async function run() {
       const query = {_id:ObjectId(itemId)}
       const result = await itemCollection.findOne(query)
       res.send(result);
+    })
+
+    //delete an item
+    app.delete('/item/:id', async(req,res)=>{
+      const itemId = req.params.id
+      const query = {_id:ObjectId(itemId)}
+      const result = await orderCollection.deleteOne(query)
+      res.send(result);
+      console.log(itemId)
     })
 /**
  * Get orders
@@ -92,6 +118,37 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc, options);
       res.send({ result, token });
     });
+
+
+    ///get a user
+
+    app.get('/user/:email', async(req,res)=>{
+      const email = req.params.email
+      const query = {email:email}
+      const result = await userCollection.findOne(query)
+      res.send(result);
+    })
+
+    //update a user
+    app.put('/update/:email', verifyJWT, async(req,res)=>{
+      const email = req.params.email
+      const filter = { email: email };
+      const userinfo  =  req.body 
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          name:userinfo.name,
+          img: userinfo.img,
+          contact:userinfo.contact
+        },
+      };
+      
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+  
+      res.send(result);
+    })
+
+
   } finally {
     //
   }
