@@ -21,6 +21,7 @@ async function run() {
     const database = client.db("entropyLab");
     const itemCollection = database.collection("labItems");
     const userCollection = database.collection("users");
+    const orderCollection = database.collection("orders");
     console.log("EntropyLab server connected");
 
     /**
@@ -50,6 +51,13 @@ async function run() {
       const itemId = req.params.id
       const query = {_id:ObjectId(itemId)}
       const result = await itemCollection.findOne(query)
+      res.send(result);
+    })
+
+    app.post('/order',async(req,res)=>{
+      const order = req.body
+      console.log(order)
+      const result = await orderCollection.insertOne(order);
       res.send(result);
     })
 
