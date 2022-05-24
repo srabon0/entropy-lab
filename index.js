@@ -53,6 +53,18 @@ async function run() {
       const result = await itemCollection.findOne(query)
       res.send(result);
     })
+/**
+ * Get orders
+ * Add orders
+ * order filter by email
+ * 
+*/
+    app.get('/order/:email',async(req,res)=>{
+      const email = req.params.email
+      const query = {customer:email}
+      const result = await orderCollection.find(query).toArray();
+      res.send(result);
+    })
 
     app.post('/order',async(req,res)=>{
       const order = req.body
@@ -60,6 +72,8 @@ async function run() {
       const result = await orderCollection.insertOne(order);
       res.send(result);
     })
+
+
 
     //craeatea a new user
     app.put("/user/:email", async (req, res) => {
