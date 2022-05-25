@@ -40,6 +40,20 @@ async function run() {
     const reviewCollection = database.collection("review");
     console.log("EntropyLab server connected");
 
+    //verify as a admin
+    const verifyAdmin = async (req, res, next) => {
+      const requester = req.decoded.email;
+      console.log(requester)
+      const reqAcc = await userCollection.findOne({ email: requester });
+      if (reqAcc.role === 'Admin') {
+        next();
+      }
+      else {
+        res.status(403).send({ message: 'forbidden' });
+      }
+    }
+
+
     /**
      *
      * Get all item
@@ -53,6 +67,11 @@ async function run() {
       res.send(items);
     });
 
+    /**
+   * verify admin middleware to secure the api
+   * we can use multiple middleware in express we can use it in array and comma 
+  */
+  
     //additem
     app.post("/additem", async (req, res) => {
       const item = req.body;
@@ -90,7 +109,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/order", async (req, res) => {
+    app.post("/order",verifyJWT , async (req, res) => {
       const order = req.body;
       console.log(order);
       const result = await orderCollection.insertOne(order);
@@ -98,7 +117,7 @@ async function run() {
     });
 
     //get all user
-    app.get("/users", verifyJWT, async (req, res) => {
+    app.get("/users", verifyJWT,verifyAdmin, async (req, res) => {
       const query = {};
       const result = await userCollection.find(query).toArray();
       res.send(result);
@@ -151,7 +170,7 @@ async function run() {
 
     //delte a user
 
-    app.delete('/deluser/:id',verifyJWT, async(req,res)=>{
+    app.delete('/deluser/:id',verifyJWT,verifyAdmin, async(req,res)=>{
       const userId = req.params.id
       console.log(userId)
       const query = { _id: ObjectId(userId) };
@@ -161,7 +180,7 @@ async function run() {
 
     //make user admin
 
-    app.put("/makeadmin/:email", async (req, res) => {
+    app.put("/makeadmin/:email",verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
         const updateDoc = {
@@ -169,8 +188,29 @@ async function run() {
         }
         const result = await userCollection.updateOne(filter, updateDoc);
         res.send( result );
-      })
+      });
 
+
+      //check a user is admin or not
+      // if he is an admin 
+    app.get('/isThePersonAdmin/:email',async(req,res)=>{
+      const email= req.params.email;
+      const user = await userCollection.findOne({email:email})
+      const isAdmin = user.role === 'Admin';
+      res.send({admin: isAdmin})
+    })
+
+
+    //all orders manage
+
+    app.get("/orders", async (req, res) => {
+      const query = {};
+      const cursor = orderCollection.find(query);
+      const orders = await cursor.toArray();
+      res.send(orders);
+    });
+    
+    
     //all review
 
     app.get("/reviews", async (req, res) => {
