@@ -43,9 +43,10 @@ async function run() {
     //verify as a admin
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
-      console.log(requester)
+     
       const reqAcc = await userCollection.findOne({ email: requester });
       if (reqAcc.role === 'Admin') {
+       
         next();
       }
       else {
@@ -94,7 +95,7 @@ async function run() {
       const query = { _id: ObjectId(itemId) };
       const result = await orderCollection.deleteOne(query);
       res.send(result);
-      console.log(itemId);
+     
     });
     /**
      * Get orders
@@ -111,7 +112,7 @@ async function run() {
 
     app.post("/order",verifyJWT , async (req, res) => {
       const order = req.body;
-      console.log(order);
+      
       const result = await orderCollection.insertOne(order);
       res.send(result);
     });
@@ -172,7 +173,7 @@ async function run() {
 
     app.delete('/deluser/:id',verifyJWT,verifyAdmin, async(req,res)=>{
       const userId = req.params.id
-      console.log(userId)
+
       const query = { _id: ObjectId(userId) };
       const result = await userCollection.deleteOne(query);
       res.send(result)
@@ -180,16 +181,17 @@ async function run() {
 
     //make user admin
 
-    app.put("/makeadmin/:email",verifyJWT, verifyAdmin, async (req, res) => {
-      const email = req.params.email;
-      const filter = { email: email };
-        const updateDoc = {
-          $set: { role: "Admin" }
-        }
-        const result = await userCollection.updateOne(filter, updateDoc);
-        res.send( result );
-      });
-
+    app.put("/secretAdmin/:email" , async (req, res) => {
+      const wannabeAdminEmail = req.params.email;
+      const options = { upsert: true };
+      const filter = { email: wannabeAdminEmail };
+      const updateDoc = {
+        $set: { role: "Admin" },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.send({ result });
+    })
+      
 
       //check a user is admin or not
       // if he is an admin 
@@ -220,7 +222,7 @@ async function run() {
         const updateDoc = {
           $set: { transactionId: req.body }
         }
-        console.log(updateDoc);
+        
         const result = await orderCollection.updateOne(query, updateDoc);
         res.send(result)
       }
@@ -238,7 +240,7 @@ async function run() {
         const updateDoc = {
           $set: { shipped: "Deliverd"}
         }
-        console.log("Deliverd");
+    
         const result = await orderCollection.updateOne(query, updateDoc);
         res.send(result)
       }
@@ -257,7 +259,7 @@ async function run() {
     //add a review
     app.post("/addreview", verifyJWT, async (req, res) => {
       const item = req.body;
-      console.log(item);
+     
       const result = await reviewCollection.insertOne(item);
       res.send(result);
     });
