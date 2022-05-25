@@ -210,6 +210,22 @@ async function run() {
       res.send(orders);
     });
     
+    //payment with txnid
+    app.put("/order/pay/:id",async(req,res)=>{
+      const orderId=req.params.id
+      const query = {_id:ObjectId(orderId)}
+      const result = await orderCollection.findOne(query)
+      if(!result.transactionId){
+
+        const updateDoc = {
+          $set: { transactionId: req.body }
+        }
+        console.log(updateDoc);
+        const result = await orderCollection.updateOne(query, updateDoc);
+        res.send(result)
+      }
+
+    })
     
     //all review
 
