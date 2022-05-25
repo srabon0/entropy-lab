@@ -226,6 +226,24 @@ async function run() {
       }
 
     })
+
+    //shipped or deliverd
+
+    app.put("/order/delivered/:id",async(req,res)=>{
+      const orderId=req.params.id
+      const query = {_id:ObjectId(orderId)}
+      const result = await orderCollection.findOne(query)
+      if(!result.shipped){
+
+        const updateDoc = {
+          $set: { shipped: "Deliverd"}
+        }
+        console.log("Deliverd");
+        const result = await orderCollection.updateOne(query, updateDoc);
+        res.send(result)
+      }
+
+    })
     
     //all review
 
