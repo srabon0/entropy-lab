@@ -46,7 +46,7 @@ function sendConfirmOrderEmail(order) {
   const {_id,productName,pricePerUnit,customer,orderQ} = order
 
   var email = {
-    from: "srabonema4@gmail.com",
+    from: "entropyLab@industry.com",
     to: "srabonemam@gmail.com",
     subject: `You Have ordered  ${productName} - ${orderQ} unit ${pricePerUnit} is Confirmed`,
     text: `You Have ordered  ${productName} - ${orderQ} unit ${pricePerUnit} is Confirmed`,
@@ -118,9 +118,10 @@ async function run() {
   */
   
     //additem
-    app.post("/additem",verifyAdmin, async (req, res) => {
+    app.post("/additem",verifyJWT,verifyAdmin, async (req, res) => {
       const item = req.body;
       const result = await itemCollection.insertOne(item);
+      console.log("item added")
       res.send(result);
     });
 
@@ -135,7 +136,7 @@ async function run() {
 
     //delete a singple product
     //delete an item
-    app.delete("/removeitem/:id", verifyAdmin, async (req, res) => {
+    app.delete("/removeitem/:id",verifyJWT, verifyAdmin, async (req, res) => {
       const itemId = req.params.id;
       const query = { _id: ObjectId(itemId) };
       const result = await itemCollection.deleteOne(query);
@@ -252,8 +253,17 @@ async function run() {
     app.get('/isThePersonAdmin/:email',async(req,res)=>{
       const email= req.params.email;
       const user = await userCollection.findOne({email:email})
-      const isAdmin = user.role === 'Admin';
-      res.send({admin: isAdmin})
+      // const isAdmin = user.role === 'Admin';
+      // res.send({admin: isAdmin})
+      const isAdmin = user?.role
+      
+        if(isAdmin==='Admin'){
+          res.send({admin: isAdmin})
+        }else{
+          res.send({admin: false})
+        }
+      
+     
     })
 
 
