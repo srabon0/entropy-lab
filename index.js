@@ -113,7 +113,7 @@ async function run() {
      * order filter by email
      *
      */
-    app.get("/order/:email", async (req, res) => {
+    app.get("/order/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { customer: email };
       const result = await orderCollection.find(query).toArray();
