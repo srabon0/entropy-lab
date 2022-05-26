@@ -34,7 +34,7 @@ function verifyJWT(req, res, next) {
 const auth = {
   auth: {
     api_key: process.env.EMAIL_API_KEY,
-    domain:"sandbox249f23dc95864684af086f839e68d300.mailgun.org",
+    domain:process.env.DOMAIN,
   },
 };
 
