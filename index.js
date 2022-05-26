@@ -4,7 +4,8 @@ const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-
+var nodemailer = require("nodemailer");
+const mg = require("nodemailer-mailgun-transport");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -29,6 +30,49 @@ function verifyJWT(req, res, next) {
     next();
   });
 }
+
+const auth = {
+  auth: {
+    api_key: process.env.EMAIL_API_KEY,
+    domain:"sandbox249f23dc95864684af086f839e68d300.mailgun.org",
+  },
+};
+
+const nodemailerMailgun = nodemailer.createTransport(mg(auth));
+
+
+
+function sendConfirmOrderEmail(order) {
+  const {_id,productName,pricePerUnit,customer,orderQ} = order
+
+  var email = {
+    from: "srabonema4@gmail.com",
+    to: "srabonemam@gmail.com",
+    subject: `You Have ordered  ${productName} - ${orderQ} unit ${pricePerUnit} is Confirmed`,
+    text: `You Have ordered  ${productName} - ${orderQ} unit ${pricePerUnit} is Confirmed`,
+    html: `
+      <div>
+        <p> Hello dear, </p>
+        <h3>Your order is confirmed</h3>
+        <p>You Have ordered  ${productName} - ${orderQ} unit ${pricePerUnit} is Confirmed.</p>
+        <p>Please , Pay as soon as possible. order is ${_id} please store that id for future use. </p>
+
+        <h3>Our Address</h3>
+        <p>SomeWhere in Dhaka</p>
+        <p>Bangladesh</p>
+      </div>
+    `,
+  };
+
+  nodemailerMailgun.sendMail(email, (err, info) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(info);
+    }
+  });
+}
+
 
 async function run() {
   try {
@@ -74,7 +118,7 @@ async function run() {
   */
   
     //additem
-    app.post("/additem", async (req, res) => {
+    app.post("/additem",verifyAdmin, async (req, res) => {
       const item = req.body;
       const result = await itemCollection.insertOne(item);
       res.send(result);
@@ -91,7 +135,7 @@ async function run() {
 
     //delete a singple product
     //delete an item
-    app.delete("/removeitem/:id", async (req, res) => {
+    app.delete("/removeitem/:id", verifyAdmin, async (req, res) => {
       const itemId = req.params.id;
       const query = { _id: ObjectId(itemId) };
       const result = await itemCollection.deleteOne(query);
@@ -100,7 +144,7 @@ async function run() {
     });
 
     //delete an order
-    app.delete("/item/:id", async (req, res) => {
+    app.delete("/item/:id",verifyJWT, async (req, res) => {
       const itemId = req.params.id;
       const query = { _id: ObjectId(itemId) };
       const result = await orderCollection.deleteOne(query);
@@ -113,7 +157,7 @@ async function run() {
      * order filter by email
      *
      */
-    app.get("/order/:email", verifyJWT, async (req, res) => {
+    app.get("/order/:email", async (req, res) => {
       const email = req.params.email;
       const query = { customer: email };
       const result = await orderCollection.find(query).toArray();
@@ -122,7 +166,7 @@ async function run() {
 
     app.post("/order",verifyJWT , async (req, res) => {
       const order = req.body;
-      
+      sendConfirmOrderEmail(order);
       const result = await orderCollection.insertOne(order);
       res.send(result);
     });
